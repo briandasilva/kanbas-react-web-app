@@ -16,8 +16,8 @@ function WorkingWithObjects() {
     description: "Create a NodeJS server with ExpressJS",
     course: "CS 4550",
   });
-  const ASSIGNMENT_URL = "${API_BASE}/a5/assignment";
-  const MODULE_URL = "${API_BASE}/a5/module";
+  const ASSIGNMENT_URL = `${API_BASE}/a5/assignment`;
+  const MODULE_URL = `${API_BASE}/a5/module`;
   const fetchAssignment = async () => {
     const response = await axios.get(`${ASSIGNMENT_URL}`);
     setAssignment(response.data);
