@@ -1,24 +1,48 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "./index.css";
-import { modules } from "../../Database";
 import { FaEllipsisV, FaCheckCircle, FaPlusCircle } from "react-icons/fa";
 import { useParams } from "react-router";
 import { useSelector, useDispatch } from "react-redux";
-import { addModule, deleteModule, updateModule, setModule } from "./reducer";
+import {
+  addModule,
+  deleteModule,
+  updateModule,
+  setModule,
+  setModules,
+} from "./reducer";
+import * as client from "./client";
 import { KanbasState } from "../../store";
 
 function ModuleList() {
   const { courseId } = useParams();
+  useEffect(() => {
+    client
+      .findModulesForCourse(courseId)
+      .then((modules) => dispatch(setModules(modules)));
+  }, [courseId]);
+
   const modulesList = useSelector(
     (state: KanbasState) => state.modulesReducer.modules
-  );
-  const [selectedModule, setSelectedModule] = useState(
-    modulesList.filter((module) => module.course === courseId)[0]
   );
   const module = useSelector(
     (state: KanbasState) => state.modulesReducer.module
   );
   const dispatch = useDispatch();
+
+  const handleAddModule = () => {
+    client.createModule(courseId, module).then((module) => {
+      dispatch(addModule(module));
+    });
+  };
+  const handleDeleteModule = (moduleId: string) => {
+    client.deleteModule(moduleId).then((status) => {
+      dispatch(deleteModule(moduleId));
+    });
+  };
+  const handleUpdateModule = async () => {
+    const status = await client.updateModule(module);
+    dispatch(updateModule(module));
+  };
 
   return (
     <div className="flex-fill">
@@ -49,15 +73,13 @@ function ModuleList() {
             />
             <button
               className="btn btn-xs btn-success"
-              onClick={() =>
-                dispatch(addModule({ ...module, course: courseId }))
-              }
+              onClick={handleAddModule}
             >
               Add
             </button>
             <button
               className="btn btn-outline-dark btn-xs"
-              onClick={() => dispatch(updateModule(module))}
+              onClick={handleUpdateModule}
             >
               Update
             </button>
@@ -75,11 +97,7 @@ function ModuleList() {
         {modulesList
           .filter((module) => module.course === courseId)
           .map((module, index) => (
-            <li
-              key={index}
-              className="list-group-item"
-              onClick={() => setSelectedModule(module)}
-            >
+            <li key={index} className="list-group-item">
               <div>
                 <FaEllipsisV className="me-2" />
                 {module.name}
@@ -96,26 +114,24 @@ function ModuleList() {
 
                   <button
                     className="btn btn-danger btn-sm"
-                    onClick={() => dispatch(deleteModule(module._id))}
+                    onClick={() => handleDeleteModule(module._id)}
                   >
                     X
                   </button>
                 </span>
               </div>
-              {selectedModule._id === module._id && (
-                <ul className="list-group">
-                  {module.lessons?.map((lesson, index) => (
-                    <li className="list-group-item" key={index}>
-                      <FaEllipsisV className="me-2" />
-                      {lesson.name}
-                      <span className="float-end">
-                        <FaCheckCircle className="text-success" />
-                        <FaEllipsisV className="ms-2" />
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              )}
+              <ul className="list-group">
+                {module.lessons?.map((lesson, index) => (
+                  <li className="list-group-item" key={index}>
+                    <FaEllipsisV className="me-2" />
+                    {lesson.name}
+                    <span className="float-end">
+                      <FaCheckCircle className="text-success" />
+                      <FaEllipsisV className="ms-2" />
+                    </span>
+                  </li>
+                ))}
+              </ul>
             </li>
           ))}
       </ul>
